@@ -20,12 +20,15 @@
 /*****************************
   Contact Advanced Research Consulting for Driver libraries! www.advancedresearch.comsulting
  ******************************/
+
+
+/*Firmware has been modified by Andreas Bodén */
+
 #include <SD.h>
 #include <SPI.h>
 //#include <i2c_driver_wire.h>
 #include <Wire.h>
 #include "Linduino.h"
-
 #include "Adafruit_MCP23017.h"
 
 #define focus 15     //sets focus line #
@@ -73,20 +76,20 @@ int runCycles = 0; //holds running position vs total cycles for timelapse
 
 //PARAMETER INITIALIZATION
 
-//DAC RASTER SCAN, ALL IN 16bit UNITS
-uint16_t dimOneChan = 0;
+//DAC RASTER SCAN
+uint8_t dimOneChan = 0;
 float dimOneStartV = 0; //In volts
 float dimOneLenV = 0;
 float dimOneStepSizeV = 0;
-uint16_t dimTwoChan = 0;
+uint8_t dimTwoChan = 0;
 float dimTwoStartV = 0;
 float dimTwoLenV = 0;
 float dimTwoStepSizeV = 0;
-uint16_t dimThreeChan = 0;
+uint8_t dimThreeChan = 0;
 float dimThreeStartV = 0;
 float dimThreeLenV = 0;
 float dimThreeStepSizeV = 0;
-uint16_t dimFourChan = 0;
+uint8_t dimFourChan = 0;
 float dimFourStartV = 0;
 float dimFourLenV = 0;
 float dimFourStepSizeV = 0;
@@ -94,6 +97,18 @@ uint16_t settlingTimeUs = 0;
 uint16_t dwellTimeUs = 0;
 float angleRad = 0;
 elapsedMicros usSinceReset;
+
+//PIXEL CYCLE PARAMETERS, CURRENTLY FOR UP TO 3 PULSES
+uint8_t p1Line = 0;
+uint16_t p1StartUs = 0;
+uint16_t p1EndUs = 0;
+uint8_t p2Line = 0;
+uint16_t p2StartUs = 0;
+uint16_t p2EndUs = 0;
+uint8_t p3Line = 0;
+uint16_t p3StartUs = 0;
+uint16_t p3EndUs = 0;
+elapsedMicros sincePixelCycleStart;
 
 //Memory arrays for DAC channels
 int currentDACValues[16]; //these store the DAC assigned numbers!
@@ -501,16 +516,7 @@ void loop()
               setDACVoltage(dimOneChan, dimOneStartV + dimOnePrimeV);
               setDACVoltage(dimTwoChan, dimTwoStartV + dimTwoPrimeV);
               //Pixel cycle
-              usSinceReset = 0;
-              while (usSinceReset < settlingTimeUs) {
-                ;
-              }
-              setTTL(0, 1);
-              usSinceReset -= settlingTimeUs;
-              while (usSinceReset < dwellTimeUs) {
-                ;
-              }
-              setTTL(0, 0);
+              runPixelCycle();
               //--------
               dimOnePosV += dimOneStepSizeV;
             }
@@ -672,6 +678,73 @@ void setParameter(String pName, String pValue)
     angleRad = pValue.toFloat();
     String out = "Parameter " + pName + " set to " + (String)angleRad + "\n";
     Serial.print(out);
+  }
+  if (pName == "p1Line") {
+    p1Line = pValue.toInt();
+    String out = "Parameter " + pName + " set to " + (String)p1Line + "\n";
+    Serial.print(out);
+  }
+  if (pName == "p1StartUs") {
+    p1StartUs = (uint16_t)pValue.toInt();
+    String out = "Parameter " + pName + " set to " + (String)p1StartUs + "\n";
+    Serial.print(out);
+  }
+  if (pName == "p1EndUs") {
+    p1EndUs = (uint16_t)pValue.toInt();
+    String out = "Parameter " + pName + " set to " + (String)p1EndUs + "\n";
+    Serial.print(out);
+  }
+  if (pName == "p2Line") {
+    p2Line = (uint8_t)pValue.toInt();
+    String out = "Parameter " + pName + " set to " + (String)p2Line + "\n";
+    Serial.print(out);
+  }
+  if (pName == "p2StartUs") {
+    p2StartUs = (uint16_t)pValue.toInt();
+    String out = "Parameter " + pName + " set to " + (String)p2StartUs + "\n";
+    Serial.print(out);
+  }
+  if (pName == "p2EndUs") {
+    p2EndUs = (uint16_t)pValue.toInt();
+    String out = "Parameter " + pName + " set to " + (String)p2EndUs + "\n";
+    Serial.print(out);
+  }
+  if (pName == "p3Line") {
+    p3Line = (uint8_t)pValue.toInt();
+    String out = "Parameter " + pName + " set to " + (String)p3Line + "\n";
+    Serial.print(out);
+  }
+  if (pName == "p3StartUs") {
+    p3StartUs = (uint16_t)pValue.toInt();
+    String out = "Parameter " + pName + " set to " + (String)p3StartUs + "\n";
+    Serial.print(out);
+  }
+  if (pName == "p3EndUs") {
+    p3EndUs = (uint16_t)pValue.toInt();
+    String out = "Parameter " + pName + " set to " + (String)p3EndUs + "\n";
+    Serial.print(out);
+  }
+}
+
+void runPixelCycle() {
+  sincePixelCycleStart = 0;
+  waitUntil(&sincePixelCycleStart, p1StartUs);
+  setTTL(p1Line, 1);
+  waitUntil(&sincePixelCycleStart, p1EndUs);
+  setTTL(p1Line, 0);
+  waitUntil(&sincePixelCycleStart, p2StartUs);
+  setTTL(p2Line, 1);
+  waitUntil(&sincePixelCycleStart, p2EndUs);
+  setTTL(p2Line, 0);
+  waitUntil(&sincePixelCycleStart, p3StartUs);
+  setTTL(p3Line, 1);
+  waitUntil(&sincePixelCycleStart, p3EndUs);
+  setTTL(p3Line, 0);
+}
+
+void waitUntil(elapsedMicros & counter, uint16_t timeout) {
+  while (counter < timeout) {
+    ;
   }
 }
 
