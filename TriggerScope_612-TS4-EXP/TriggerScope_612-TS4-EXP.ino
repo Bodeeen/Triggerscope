@@ -70,7 +70,7 @@ int timeCycles = 1; //used for high speed switching inside of a loop
 int runCycles = 0; //holds running position vs total cycles for timelapse
 
 int dacVal[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}; //these store the DAC assigned numbers!
-byte RNG[16] = {2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2}; //range saves
+byte RNG[16] = {4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4}; //range saves
 byte TRG[4] = {4,4,4,4}; //trigger state saves 0 = LOW 1 = HIGH 2 = RISING 3 = FALLING 4 = CHANGE
 
 volatile boolean inTrigger=false;
