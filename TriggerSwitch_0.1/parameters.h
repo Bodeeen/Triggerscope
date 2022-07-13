@@ -6,38 +6,38 @@
 //GLOBAL PARAMETER INITIALIZATION
 
 //DAC RASTER SCAN
-uint8_t dimOneChan;
-float dimOneStartV; //In volts
-float dimOneLenV;
-float dimOneStepSizeV;
-uint8_t dimTwoChan;
-float dimTwoStartV;
-float dimTwoLenV;
-float dimTwoStepSizeV;
-uint8_t dimThreeChan;
-float dimThreeStartV;
-float dimThreeLenV;
-float dimThreeStepSizeV;
-uint8_t dimFourChan;
-float dimFourStartV;
-float dimFourLenV;
-float dimFourStepSizeV;
-uint16_t settlingTimeUs;
-uint16_t dwellTimeUs;
-float angleRad;
-elapsedMicros usSinceReset;
+extern uint8_t dimOneChan;
+extern float dimOneStartV; //In volts
+extern float dimOneLenV;
+extern float dimOneStepSizeV;
+extern uint8_t dimTwoChan;
+extern float dimTwoStartV;
+extern float dimTwoLenV;
+extern float dimTwoStepSizeV;
+extern uint8_t dimThreeChan;
+extern float dimThreeStartV;
+extern float dimThreeLenV;
+extern float dimThreeStepSizeV;
+extern uint8_t dimFourChan;
+extern float dimFourStartV;
+extern float dimFourLenV;
+extern float dimFourStepSizeV;
+extern uint16_t settlingTimeUs0;
+extern uint16_t dwellTimeUs;
+extern float angleRad;
+extern elapsedMicros usSinceReset;
 
 //PIXEL CYCLE PARAMETERS, CURRENTLY FOR UP TO 3 PULSES
-uint8_t p1Line;
-uint16_t p1StartUs;
-uint16_t p1EndUs;
-uint8_t p2Line;
-uint16_t p2StartUs;
-uint16_t p2EndUs;
-uint8_t p3Line;
-uint16_t p3StartUs;
-uint16_t p3EndUs;
-elapsedMicros sincePixelCycleStart;
+extern uint8_t p1Line;
+extern uint16_t p1StartUs;
+extern uint16_t p1EndUs;
+extern uint8_t p2Line;
+extern uint16_t p2StartUs;
+extern uint16_t p2EndUs;
+extern uint8_t p3Line;
+extern uint16_t p3StartUs;
+extern uint16_t p3EndUs;
+extern elapsedMicros sincePixelCycleStart;
 
 
 //FUNCTIONS

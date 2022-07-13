@@ -2,6 +2,42 @@
 #include <Arduino.h>
 #include "parameters.h"
 
+//GLOBAL PARAMETER INITIALIZATION
+
+//DAC RASTER SCAN
+uint8_t dimOneChan = 0;
+float dimOneStartV = 0; //In volts
+float dimOneLenV = 0;
+float dimOneStepSizeV = 0;
+uint8_t dimTwoChan = 0;
+float dimTwoStartV = 0;
+float dimTwoLenV = 0;
+float dimTwoStepSizeV = 0;
+uint8_t dimThreeChan = 0;
+float dimThreeStartV = 0;
+float dimThreeLenV = 0;
+float dimThreeStepSizeV = 0;
+uint8_t dimFourChan = 0;
+float dimFourStartV = 0;
+float dimFourLenV = 0;
+float dimFourStepSizeV = 0;
+uint16_t settlingTimeUs = 0;
+uint16_t dwellTimeUs = 0;
+float angleRad = 0;
+elapsedMicros usSinceReset;
+
+//PIXEL CYCLE PARAMETERS, CURRENTLY FOR UP TO 3 PULSES
+uint8_t p1Line = 0;
+uint16_t p1StartUs = 0;
+uint16_t p1EndUs = 0;
+uint8_t p2Line = 0;
+uint16_t p2StartUs = 0;
+uint16_t p2EndUs = 0;
+uint8_t p3Line = 0;
+uint16_t p3StartUs = 0;
+uint16_t p3EndUs = 0;
+elapsedMicros sincePixelCycleStart;
+
 void readParameter(String & inputString) {
   String out = "Running read parameter function\n";
   Serial.print(out);
