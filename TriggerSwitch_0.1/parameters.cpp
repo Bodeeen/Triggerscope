@@ -24,7 +24,6 @@ float dimFourStepSizeV = 0;
 uint16_t settlingTimeUs = 0;
 uint16_t dwellTimeUs = 0;
 float angleRad = 0;
-elapsedMicros usSinceReset;
 
 //PIXEL CYCLE PARAMETERS, CURRENTLY FOR UP TO 3 PULSES
 uint8_t p1Line = 0;
@@ -36,7 +35,6 @@ uint16_t p2EndUs = 0;
 uint8_t p3Line = 0;
 uint16_t p3StartUs = 0;
 uint16_t p3EndUs = 0;
-elapsedMicros sincePixelCycleStart;
 
 void readParameter(String & inputString) {
   String out = "Running read parameter function\n";

@@ -101,6 +101,10 @@ byte pChannel = 0; //number of channels micromanager has attempted to control
 byte lastPT = 20;
 String idname = "ARC TRIGGERSCOPE 16 R4 BOARD 4v.612F - TestaLab version";
 
+
+//Timing variables
+elapsedMicros sincePixelCycleStart;
+
 void setup() {
   mcp.begin(0x27);   //turn on MUX comms
   //Wire.setClock(1100000);

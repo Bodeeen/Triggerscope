@@ -25,7 +25,6 @@ extern float dimFourStepSizeV;
 extern uint16_t settlingTimeUs0;
 extern uint16_t dwellTimeUs;
 extern float angleRad;
-extern elapsedMicros usSinceReset;
 
 //PIXEL CYCLE PARAMETERS, CURRENTLY FOR UP TO 3 PULSES
 extern uint8_t p1Line;
@@ -37,7 +36,6 @@ extern uint16_t p2EndUs;
 extern uint8_t p3Line;
 extern uint16_t p3StartUs;
 extern uint16_t p3EndUs;
-extern elapsedMicros sincePixelCycleStart;
 
 
 //FUNCTIONS
