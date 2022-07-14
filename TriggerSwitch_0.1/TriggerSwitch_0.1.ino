@@ -728,21 +728,21 @@ void setParameter(String pName, String pValue)
 
 void runPixelCycle() {
   sincePixelCycleStart = 0;
-  waitUntil(&sincePixelCycleStart, p1StartUs);
+  waitUntil(sincePixelCycleStart, p1StartUs);
   setTTL(p1Line, 1);
-  waitUntil(&sincePixelCycleStart, p1EndUs);
+  waitUntil(sincePixelCycleStart, p1EndUs);
   setTTL(p1Line, 0);
-  waitUntil(&sincePixelCycleStart, p2StartUs);
+  waitUntil(sincePixelCycleStart, p2StartUs);
   setTTL(p2Line, 1);
-  waitUntil(&sincePixelCycleStart, p2EndUs);
+  waitUntil(sincePixelCycleStart, p2EndUs);
   setTTL(p2Line, 0);
-  waitUntil(&sincePixelCycleStart, p3StartUs);
+  waitUntil(sincePixelCycleStart, p3StartUs);
   setTTL(p3Line, 1);
-  waitUntil(&sincePixelCycleStart, p3EndUs);
+  waitUntil(sincePixelCycleStart, p3EndUs);
   setTTL(p3Line, 0);
 }
 
-void waitUntil(elapsedMicros & counter, uint16_t timeout) {
+void waitUntil(elapsedMicros counter, uint16_t timeout) {
   while (counter < timeout) {
     ;
   }
