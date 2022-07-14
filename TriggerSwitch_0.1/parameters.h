@@ -22,8 +22,6 @@ extern uint8_t dimFourChan;
 extern float dimFourStartV;
 extern float dimFourLenV;
 extern float dimFourStepSizeV;
-extern uint16_t settlingTimeUs0;
-extern uint16_t dwellTimeUs;
 extern float angleRad;
 
 //PIXEL CYCLE PARAMETERS, CURRENTLY FOR UP TO 3 PULSES

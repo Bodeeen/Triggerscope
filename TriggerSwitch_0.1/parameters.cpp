@@ -21,8 +21,6 @@ uint8_t dimFourChan = 0;
 float dimFourStartV = 0;
 float dimFourLenV = 0;
 float dimFourStepSizeV = 0;
-uint16_t settlingTimeUs = 0;
-uint16_t dwellTimeUs = 0;
 float angleRad = 0;
 
 //PIXEL CYCLE PARAMETERS, CURRENTLY FOR UP TO 3 PULSES
@@ -149,16 +147,6 @@ void setParameter(String pName, String pValue)
   if (pName == "dimFourStepSizeV") {
     dimFourStepSizeV = pValue.toFloat();
     String out = "Parameter " + pName + " set to " + (String)dimThreeStepSizeV + "\n";
-    Serial.print(out);
-  }
-  if (pName == "settlingTimeUs") {
-    settlingTimeUs = pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)settlingTimeUs + "\n";
-    Serial.print(out);
-  }
-  if (pName == "dwellTimeUs") {
-    dwellTimeUs = pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)dwellTimeUs + "\n";
     Serial.print(out);
   }
   if (pName == "angleRad") {
