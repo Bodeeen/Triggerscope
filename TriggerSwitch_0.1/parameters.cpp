@@ -23,7 +23,29 @@ float dimFourLenV = 0;
 float dimFourStepSizeV = 0;
 float angleRad = 0;
 
+//DAC pLS-RESOLFT SCAN
+uint8_t onLaserTTLChan = 0;
+uint8_t offLaserTTLChan = 0;
+uint8_t roLaserTTLChan = 0;
+uint8_t galvoXDACChan = 0;
+uint8_t stageXDACChan = 0;
+
+uint16_t onPulseTimeUs = 0;
+uint16_t delayAfterOnUs = 0;
+uint16_t offPulseTimeUs = 0;
+uint16_t delayAfterOffUs = 0;
+uint16_t delayAfterDACStepUs = 0;
+uint16_t roPulseTimeUs = 0;
+float roRestingV = 0;
+float roStartV = 0;
+float roStepSizeV = 0;
+uint16_t roSteps = 0;
+float cycleStartV = 0;
+float cycleStepSizeV = 0;
+uint16_t cycleSteps = 0;
+
 //PIXEL CYCLE PARAMETERS, CURRENTLY FOR UP TO 3 PULSES
+uint16_t sequenceTimeUs = 0;
 uint8_t p1Line = 0;
 uint16_t p1StartUs = 0;
 uint16_t p1EndUs = 0;
@@ -35,8 +57,8 @@ uint16_t p3StartUs = 0;
 uint16_t p3EndUs = 0;
 
 void readParameter(String & inputString) {
-  String out = "Running read parameter function\n";
-  Serial.print(out);
+  String out = "Running read parameter function";
+  Serial.println(out);
   //Function to read paramter sent on form "PARAMETER,pName,pType,pValue\n"
   byte charPos = 10;
   String pName = "";
@@ -60,143 +82,198 @@ void readParameter(String & inputString) {
     pValue += (char)inputString[charPos];
     charPos++;
   }
-  out = "Recieved pName: " + pName + ", pValue: " + pValue + "\n";
-  Serial.print(out);
+  out = "Recieved pName: " + pName + ", pValue: " + pValue;
+  Serial.println(out);
   setParameter(pName, pValue);//Send extracted strings to setParameter function
 }
 
 void setParameter(String pName, String pValue)
 {
-  String runStr = "Running setParameter function\n";
-  Serial.print(runStr);
+  String debugOut;
+  //DAC RASTER SCAN
   if (pName == "dimOneChan") {
     dimOneChan = pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)dimOneChan + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)dimOneChan;
   }
   if (pName == "dimOneStartV") {
     dimOneStartV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimOneStartV + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)dimOneStartV;
   }
   if (pName == "dimOneLenV") {
     dimOneLenV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimOneLenV + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)dimOneLenV;
   }
   if (pName == "dimOneStepSizeV") {
     dimOneStepSizeV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimOneStepSizeV + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)dimOneStepSizeV;
   }
   if (pName == "dimTwoChan") {
     dimTwoChan = pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)dimTwoChan + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)dimTwoChan;
   }
   if (pName == "dimTwoStartV") {
     dimTwoStartV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimTwoStartV + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)dimTwoStartV;
   }
   if (pName == "dimTwoLenV") {
     dimTwoLenV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimTwoLenV + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)dimTwoLenV;
   }
   if (pName == "dimTwoStepSizeV") {
     dimTwoStepSizeV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimTwoStepSizeV + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)dimTwoStepSizeV;
   }
   if (pName == "dimThreeChan") {
     dimThreeChan = pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)dimThreeChan + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)dimThreeChan;
   }
   if (pName == "dimThreeStartV") {
     dimThreeStartV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimThreeStartV + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)dimThreeStartV;
   }
   if (pName == "dimThreeLenV") {
     dimThreeLenV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimThreeLenV + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)dimThreeLenV;
   }
   if (pName == "dimThreeStepSizeV") {
     dimThreeStepSizeV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimThreeStepSizeV + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)dimThreeStepSizeV;
   }
   if (pName == "dimFourChan") {
     dimFourChan = pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)dimThreeChan + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)dimThreeChan;
   }
   if (pName == "dimFourStartV") {
     dimFourStartV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimThreeStartV + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)dimThreeStartV;
   }
   if (pName == "dimFourLenV") {
     dimFourLenV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimThreeLenV + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)dimThreeLenV;
   }
   if (pName == "dimFourStepSizeV") {
     dimFourStepSizeV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimThreeStepSizeV + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)dimThreeStepSizeV;
   }
   if (pName == "angleRad") {
     angleRad = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)angleRad + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)angleRad;
+  }
+  
+  //DAC pLS-RESOLFT SCAN
+  if (pName == "onLaserTTLChan") {
+    onLaserTTLChan = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)onLaserTTLChan;
+  }
+  if (pName == "offLaserTTLChan") {
+    offLaserTTLChan = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)offLaserTTLChan;
+  }
+  if (pName == "roLaserTTLChan") {
+    roLaserTTLChan = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)roLaserTTLChan;
+  }
+  if (pName == "galvoXDACChan") {
+    galvoXDACChan = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)galvoXDACChan;
+  }
+  if (pName == "stageXDACChan") {
+    stageXDACChan = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)stageXDACChan;
+  }
+  if (pName == "onPulseTimeUs") {
+    onPulseTimeUs = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)onPulseTimeUs;
+  }
+  if (pName == "delayAfterOnUs") {
+    delayAfterOnUs = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)delayAfterOnUs;
+  }
+  if (pName == "offPulseTimeUs") {
+    offPulseTimeUs = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)offPulseTimeUs;
+  }
+  if (pName == "delayAfterOffUs") {
+    delayAfterOffUs = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)delayAfterOffUs;
+  }
+  if (pName == "delayAfterDACStepUs") {
+    delayAfterDACStepUs = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)delayAfterDACStepUs;
+  }
+  if (pName == "roPulseTimeUs") {
+    roPulseTimeUs = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)roPulseTimeUs;
+  }
+  if (pName == "roRestingV") {
+    roRestingV = pValue.toFloat();
+    debugOut = "Parameter " + pName + " set to " + (String)roRestingV;
+  }
+  if (pName == "roStartV") {
+    roStartV = pValue.toFloat();
+    debugOut = "Parameter " + pName + " set to " + (String)roStartV;
+  }
+  if (pName == "roStepSizeV") {
+    roStepSizeV = pValue.toFloat();
+    debugOut = "Parameter " + pName + " set to " + (String)roStepSizeV;
+  }
+  if (pName == "roSteps") {
+    roSteps = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)roSteps;
+  }
+  if (pName == "cycleStartV") {
+    cycleStartV = pValue.toFloat();
+    debugOut = "Parameter " + pName + " set to " + (String)cycleStartV;
+  }
+  if (pName == "cycleStepSizeV") {
+    cycleStepSizeV = pValue.toFloat();
+    debugOut = "Parameter " + pName + " set to " + (String)cycleStepSizeV;
+  }
+  if (pName == "cycleSteps") {
+    cycleSteps = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)cycleSteps;
+  }
+  
+  //PIXEL CYCLE PARAMETERS, CURRENTLY FOR UP TO 3 PULSES
+  if (pName == "sequenceTimeUs") {
+    sequenceTimeUs = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)sequenceTimeUs;
   }
   if (pName == "p1Line") {
     p1Line = pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)p1Line + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)p1Line;
   }
   if (pName == "p1StartUs") {
     p1StartUs = (uint16_t)pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)p1StartUs + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)p1StartUs;
   }
   if (pName == "p1EndUs") {
     p1EndUs = (uint16_t)pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)p1EndUs + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)p1EndUs;
   }
   if (pName == "p2Line") {
     p2Line = (uint8_t)pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)p2Line + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)p2Line;
   }
   if (pName == "p2StartUs") {
     p2StartUs = (uint16_t)pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)p2StartUs + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)p2StartUs;
   }
   if (pName == "p2EndUs") {
     p2EndUs = (uint16_t)pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)p2EndUs + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)p2EndUs;
   }
   if (pName == "p3Line") {
     p3Line = (uint8_t)pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)p3Line + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)p3Line;
   }
   if (pName == "p3StartUs") {
     p3StartUs = (uint16_t)pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)p3StartUs + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)p3StartUs;
   }
   if (pName == "p3EndUs") {
     p3EndUs = (uint16_t)pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)p3EndUs + "\n";
-    Serial.print(out);
+    debugOut = "Parameter " + pName + " set to " + (String)p3EndUs;
   }
+  Serial.println(debugOut);
 }

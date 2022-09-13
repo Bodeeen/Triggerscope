@@ -24,7 +24,29 @@ extern float dimFourLenV;
 extern float dimFourStepSizeV;
 extern float angleRad;
 
+//DAC pLS-RESOLFT SCAN
+extern uint8_t onLaserTTLChan;
+extern uint8_t offLaserTTLChan;
+extern uint8_t roLaserTTLChan;
+extern uint8_t galvoXDACChan;
+extern uint8_t stageXDACChan;
+
+extern uint16_t onPulseTimeUs;
+extern uint16_t delayAfterOnUs;
+extern uint16_t offPulseTimeUs;
+extern uint16_t delayAfterOffUs;
+extern uint16_t delayAfterDACStepUs;
+extern uint16_t roPulseTimeUs;
+extern float roRestingV;
+extern float roStartV;
+extern float roStepSizeV;
+extern uint16_t roSteps;
+extern float cycleStartV;
+extern float cycleStepSizeV;
+extern uint16_t cycleSteps;
+
 //PIXEL CYCLE PARAMETERS, CURRENTLY FOR UP TO 3 PULSES
+extern uint16_t sequenceTimeUs;
 extern uint8_t p1Line;
 extern uint16_t p1StartUs;
 extern uint16_t p1EndUs;

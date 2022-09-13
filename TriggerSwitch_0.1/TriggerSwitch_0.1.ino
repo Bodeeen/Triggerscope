@@ -98,12 +98,12 @@ boolean reportTime = 0;
 boolean umArmIgnore = 0; //this handles micromanagers multiple ARM commands which are issued back-to-back on MDA acqtivation. Ignores after a short wait.
 boolean usepwm = false;
 byte pChannel = 0; //number of channels micromanager has attempted to control
-byte lastPT = 20;
 String idname = "ARC TRIGGERSCOPE 16 R4 BOARD 4v.612F - TestaLab version";
 
 
 //Timing variables
 elapsedMicros sincePixelCycleStart;
+elapsedMicros sincepLSRevent;
 
 void setup() {
   mcp.begin(0x27);   //turn on MUX comms
@@ -186,7 +186,9 @@ void loop()
 
   //************************   DEVICE CONTROL & COMMAND CODE          ***********************//
   //************************  SERIAL COMMUNICATION CODE    ******************///
-  //if (!Serial) {reboot();}
+  if (!Serial) {
+    reboot();
+  }
 
   if (stringComplete)  //Check whatever came in on serial
   {
@@ -236,59 +238,35 @@ void loop()
     }
 
 
-    //------------------------------------ SET DAC OUTPUT ------------------------------------------
+    //------------------------------------ SET DAC OUTPUT VOLTAGE ------------------------------------------
 
-    if (inputString.substring(0, 3) == "DAC" && inputString.substring(0, 5) != "DACPR" ) {
-      char dIn[2] = {inputString[3], inputString[4]}; //grab DAC Line #
-      byte dacNum = 0;
-      if (dIn[2] == 44) {
-        dacNum = atoi(&dIn[1]);  //IF less than 10, assign single digit value
+    if (inputString.substring(0, 3) == "DAC") {
+      uint8_t DACChannel;
+      float DACVoltage;
+      uint8_t index;
+      if (inputString[4] == 44) { //If fifth charachter is comma
+        DACChannel = (uint8_t)inputString.substring(3, 4).toInt();  //If less than 10, assign single digit value
+        index = 5; //Index of charactera after comma
       }
       else {
-        dacNum = atoi(dIn);  //IF greater than 10, assign both chars to integer
-      }
-      boolean inRange = true; //flag to check valid entry
-
-      byte sT = 0;
-      while (inputString[sT] != ',') {
-        ++sT;  //CHECKS WHERE THE START OF THE NUMERIC DAC VALUE BEGINS
-      }
-      ++sT;
-      char fstring[8] = {}; //create a string to hold char ascii for later conversion to integer value
-      byte bVal = sT;
-      while (sT <= inputString.length() )
-      {
-        fstring[sT - bVal] = inputString[sT];
-        ++sT;
-      }
-      int userdac = atol(fstring); //convert char table to useable integer for DAC level
-      if (dacNum < 0 || dacNum > 15) {
-        inRange = false; //if entry is outside valid DAC's then throw flag as false
+        DACChannel = (uint8_t)inputString.substring(3, 5).toInt();  //IF greater than 10, assign both chars to integer
+        index = 6; //Index of charactera after comma
       }
 
-      if (inRange) { //if inputs are valid{
-        Serial.print("!DAC"); //print recieve message to operator
-        Serial.print(dacNum); //print recieve message to operator
-        Serial.print("=");
-        Serial.println(userdac);
-        setDACValue(dacNum, userdac);
-        //led indication
-        byte dTotal = 0;
-        for (byte d = 0; d < 16; ++d) {
-          if (currentDACValues[d] > 0) {
-            ++dTotal;
-          }
-        }
-        if (dTotal > 0) {
-          mcp.digitalWrite(dacLed, 1); //turn on DAC LED
-        }
-        else  {
-          mcp.digitalWrite(dacLed, 0); //turn off LED
-        }
+      if (DACChannel < 0 || DACChannel > 15) {
+        Serial.println("DAC channel is not available");
       }
-      if (!inRange) //if inputs are bad
-      {
-        Serial.println("Outside DAC Channel Range, valid ranges are 1-16....");
+      else {
+        DACVoltage = inputString.substring(index, inputString.length() - 1).toFloat(); //Get float value after comma
+        if (VMin[DACChannel] < DACVoltage && DACVoltage < VMax[DACChannel]) {
+          setDACVoltage(DACChannel, DACVoltage);
+          Serial.print("DAC voltage set to: ");
+          Serial.print(DACVoltage);
+          Serial.println(" V");
+        }
+        else {
+          Serial.println("DAC Voltage is out of range");
+        }
       }
     }
 
@@ -341,7 +319,7 @@ void loop()
 
 
     //------------------------------------ RUN PROG_WAVE FUNCTION  ------------------------------------------
-
+    //This function is now probably obsolete
 
     //example string to this entry = "PROG_WAVE,1,1,10,0,100,10"
     if (inputString.substring(0, 9) == "PROG_WAVE")
@@ -463,6 +441,9 @@ void loop()
 
     if (inputString.substring(0, 11) == "RASTER_SCAN")
     {
+      String TSStatus = "Running raster scan";
+      Serial.println(TSStatus);
+
       float dimOnePosV = 0;
       float dimTwoPosV = 0;
       float dimThreePosV = 0;
@@ -470,6 +451,8 @@ void loop()
 
       float dimOnePrimeV;
       float dimTwoPrimeV;
+
+      mcp.digitalWrite(dacLed, 1); //turn on DAC LED
 
       while (abs(dimFourPosV) <= abs(dimFourLenV)) {
         setDACVoltage(dimFourChan, dimFourStartV + dimFourPosV);
@@ -511,7 +494,54 @@ void loop()
       setDACVoltage(dimTwoChan, dimTwoStartV);
       setDACVoltage(dimThreeChan, dimThreeStartV);
       setDACVoltage(dimFourChan, dimFourStartV);
+
+      mcp.digitalWrite(dacLed, 0); //turn off DAC LED
+      Serial.println("Scan done");
     }
+
+    //------------------------------------ RUN pLS-RESOLFT_SCAN ------------------------------------------
+    /*
+    if (inputString.substring(0, 16) == "pLS-RESOLFT_SCAN")
+    {
+      String TSStatus = "Running raster scan";
+      Serial.println(TSStatus);
+      mcp.digitalWrite(dacLed, 1);
+
+      setDACVoltage(stageXDACChan, roStartV); //Place stage in starting position
+      //Insert cycle loop HERE
+      setDACVoltage(galvoXDACChan, roRestingV); //Place galvo in resting position (where is should be when on/off pulses are pulsed)
+
+      //Turn on on-laser
+      setTTL(onLaserTTLChan, 1);
+      sinceTTLevent = 0;
+      //Turn off on-laser
+      waitUntil(sinceTTLevent, onPulseTimeUs);
+      setTTL(onLaserTTLChan, 0);
+      sinceTTLevent = 0;
+      //Turn on off-laser
+      waitUntil(sinceTTLevent, delayAfterOnUs);
+      setTTL(offLaserTTLChan, 1);
+      sinceTTLevent = 0;
+      //Turn off off-laser
+      waitUntil(sinceTTLevent, offPulseTimeUs);
+      setTTL(offLaserTTLChan, 0);
+      sinceTTLevent = 0;
+      //Start read-out scan
+      waitUntil(sinceTTLevent, delayAfterOffUs);
+      for (int i = 0; i < roSteps; i++)
+      {
+        setDACVoltage(galvoXDACChan, roStartV + i * roStepSizeV);
+        sinceTTLevent = 0;
+        //Turn on ro-laser
+        waitUntil(sinceTTLevent, delayAfterDACStepUs);
+        setTTL(roLaserTTLChan, 1);
+        sinceTTLevent = 0;
+        //Turn off ro-laser
+        waitUntil(sinceTTLevent, roPulseTimeUs);
+        setTTL(roLaserTTLChan, 0);
+      }
+    }
+    */
     clearSerial();
     mcp.digitalWrite(readyLed, HIGH);
   } //EXIT LOOP FOR SERIAL HERE
@@ -523,17 +553,27 @@ void loop()
 void runPixelCycle() {
   sincePixelCycleStart = 0;
   waitUntil(sincePixelCycleStart, p1StartUs);
-  setTTL(p1Line, 1);
+  //Temnporary fix
+  setTTL(0, 1);
+  setTTL(1, 1);
+  setTTL(2, 1);
   waitUntil(sincePixelCycleStart, p1EndUs);
-  setTTL(p1Line, 0);
-  waitUntil(sincePixelCycleStart, p2StartUs);
-  setTTL(p2Line, 1);
-  waitUntil(sincePixelCycleStart, p2EndUs);
-  setTTL(p2Line, 0);
-  waitUntil(sincePixelCycleStart, p3StartUs);
-  setTTL(p3Line, 1);
-  waitUntil(sincePixelCycleStart, p3EndUs);
-  setTTL(p3Line, 0);
+  setTTL(0, 0);
+  setTTL(1, 0);
+  setTTL(2, 0);
+  //---
+  /*
+    setTTL(p1Line, 0);
+    waitUntil(sincePixelCycleStart, p2StartUs);
+    setTTL(p2Line, 1);
+    waitUntil(sincePixelCycleStart, p2EndUs);
+    setTTL(p2Line, 0);
+    waitUntil(sincePixelCycleStart, p3StartUs);
+    setTTL(p3Line, 1);
+    waitUntil(sincePixelCycleStart, p3EndUs);
+    setTTL(p3Line, 0);
+  */
+  waitUntil(sincePixelCycleStart, sequenceTimeUs);
 }
 
 void waitUntil(elapsedMicros counter, uint16_t timeout) {
@@ -643,15 +683,14 @@ void clearSerial() {
 }
 
 /*Set DAC Value*/
-void setDACValue(byte dNum, int value) {
-  dac_write(10, 0, dNum, value); // Send dac_code
-  currentDACValues[dNum] = value; //Save value set
+void setDACValue(byte DACChan, int int16Value) {
+  dac_write(10, 0, DACChan, int16Value); // Send dac_code
+  currentDACValues[DACChan] = int16Value; //Save value set
 }
 
 void setDACVoltage(byte DACChan, float voltage) {
   int int16Value = (int)(65535.0 * (voltage - VMin[DACChan]) / (VMax[DACChan] - VMin[DACChan]));
-  dac_write(10, 0, DACChan, int16Value); // Send dac_code
-  currentDACValues[DACChan] = int16Value; //Save value set
+  setDACValue(DACChan, int16Value);
 }
 
 /*SET TTL CONTROL*/
