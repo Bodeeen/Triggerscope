@@ -27,8 +27,8 @@ float angleRad = 0;
 uint8_t onLaserTTLChan = 0;
 uint8_t offLaserTTLChan = 0;
 uint8_t roLaserTTLChan = 0;
-uint8_t galvoXDACChan = 0;
-uint8_t stageXDACChan = 0;
+uint8_t roScanDACChan = 0;
+uint8_t cycleScanDACChan = 0;
 
 uint16_t onPulseTimeUs = 0;
 uint16_t delayAfterOnUs = 0;
@@ -173,13 +173,13 @@ void setParameter(String pName, String pValue)
     roLaserTTLChan = pValue.toInt();
     debugOut = "Parameter " + pName + " set to " + (String)roLaserTTLChan;
   }
-  if (pName == "galvoXDACChan") {
-    galvoXDACChan = pValue.toInt();
-    debugOut = "Parameter " + pName + " set to " + (String)galvoXDACChan;
+  if (pName == "roScanDACChan") {
+    roScanDACChan = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)roScanDACChan;
   }
-  if (pName == "stageXDACChan") {
-    stageXDACChan = pValue.toInt();
-    debugOut = "Parameter " + pName + " set to " + (String)stageXDACChan;
+  if (pName == "cycleScanDACChan") {
+    cycleScanDACChan = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)cycleScanDACChan;
   }
   if (pName == "onPulseTimeUs") {
     onPulseTimeUs = pValue.toInt();

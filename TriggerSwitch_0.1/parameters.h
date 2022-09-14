@@ -28,8 +28,8 @@ extern float angleRad;
 extern uint8_t onLaserTTLChan;
 extern uint8_t offLaserTTLChan;
 extern uint8_t roLaserTTLChan;
-extern uint8_t galvoXDACChan;
-extern uint8_t stageXDACChan;
+extern uint8_t roScanDACChan;
+extern uint8_t cycleScanDACChan;
 
 extern uint16_t onPulseTimeUs;
 extern uint16_t delayAfterOnUs;

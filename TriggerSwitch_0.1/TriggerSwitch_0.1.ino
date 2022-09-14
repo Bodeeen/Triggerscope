@@ -500,48 +500,56 @@ void loop()
     }
 
     //------------------------------------ RUN pLS-RESOLFT_SCAN ------------------------------------------
-    /*
+
     if (inputString.substring(0, 16) == "pLS-RESOLFT_SCAN")
     {
-      String TSStatus = "Running raster scan";
+      String TSStatus = "Running pLS-RESOLFT_SCAN scan";
       Serial.println(TSStatus);
       mcp.digitalWrite(dacLed, 1);
 
-      setDACVoltage(stageXDACChan, roStartV); //Place stage in starting position
+      
       //Insert cycle loop HERE
-      setDACVoltage(galvoXDACChan, roRestingV); //Place galvo in resting position (where is should be when on/off pulses are pulsed)
-
-      //Turn on on-laser
-      setTTL(onLaserTTLChan, 1);
-      sinceTTLevent = 0;
-      //Turn off on-laser
-      waitUntil(sinceTTLevent, onPulseTimeUs);
-      setTTL(onLaserTTLChan, 0);
-      sinceTTLevent = 0;
-      //Turn on off-laser
-      waitUntil(sinceTTLevent, delayAfterOnUs);
-      setTTL(offLaserTTLChan, 1);
-      sinceTTLevent = 0;
-      //Turn off off-laser
-      waitUntil(sinceTTLevent, offPulseTimeUs);
-      setTTL(offLaserTTLChan, 0);
-      sinceTTLevent = 0;
-      //Start read-out scan
-      waitUntil(sinceTTLevent, delayAfterOffUs);
-      for (int i = 0; i < roSteps; i++)
+      for (int k = 0; k < cycleSteps; k++)
       {
-        setDACVoltage(galvoXDACChan, roStartV + i * roStepSizeV);
-        sinceTTLevent = 0;
-        //Turn on ro-laser
-        waitUntil(sinceTTLevent, delayAfterDACStepUs);
-        setTTL(roLaserTTLChan, 1);
-        sinceTTLevent = 0;
-        //Turn off ro-laser
-        waitUntil(sinceTTLevent, roPulseTimeUs);
-        setTTL(roLaserTTLChan, 0);
+        setDACVoltage(cycleScanDACChan, cycleStartV + k*cycleStepSizeV); //Place stage in correct position
+        setDACVoltage(roScanDACChan, roRestingV); //Place galvo in resting position (where it should be when on/off pulses are pulsed)
+
+        //Turn on on-laser
+        setTTL(onLaserTTLChan, 1);
+        sincepLSRevent = 0;
+        //Turn off on-laser
+        waitUntil(sincepLSRevent, onPulseTimeUs);
+        setTTL(onLaserTTLChan, 0);
+        sincepLSRevent = 0;
+        //Turn on off-laser
+        waitUntil(sincepLSRevent, delayAfterOnUs);
+        setTTL(offLaserTTLChan, 1);
+        sincepLSRevent = 0;
+        //Turn off off-laser
+        waitUntil(sincepLSRevent, offPulseTimeUs);
+        setTTL(offLaserTTLChan, 0);
+        sincepLSRevent = 0;
+        //Start read-out scan
+        waitUntil(sincepLSRevent, delayAfterOffUs);
+        for (int i = 0; i < roSteps; i++)
+        {
+          setDACVoltage(roScanDACChan, roStartV + i * roStepSizeV);
+          sincepLSRevent = 0;
+          //Turn on ro-laser
+          waitUntil(sincepLSRevent, delayAfterDACStepUs);
+          setTTL(roLaserTTLChan, 1);
+          sincepLSRevent = 0;
+          //Turn off ro-laser
+          waitUntil(sincepLSRevent, roPulseTimeUs);
+          setTTL(roLaserTTLChan, 0);
+        }
       }
+      //Reset voltages
+      setDACVoltage(cycleScanDACChan, cycleStartV);
+      setDACVoltage(roScanDACChan, roRestingV);
+      mcp.digitalWrite(dacLed, 0); //turn off DAC LED
+      Serial.println("Scan done");
     }
-    */
     clearSerial();
     mcp.digitalWrite(readyLed, HIGH);
   } //EXIT LOOP FOR SERIAL HERE
