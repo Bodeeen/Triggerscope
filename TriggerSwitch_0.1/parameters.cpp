@@ -30,31 +30,34 @@ uint8_t roLaserTTLChan = 0;
 uint8_t roScanDACChan = 0;
 uint8_t cycleScanDACChan = 0;
 
-uint16_t onPulseTimeUs = 0;
-uint16_t delayAfterOnUs = 0;
-uint16_t offPulseTimeUs = 0;
-uint16_t delayAfterOffUs = 0;
-uint16_t delayAfterDACStepUs = 0;
-uint16_t roPulseTimeUs = 0;
+uint16_t timeLapsePoints = 0;
+uint32_t timeLapseDelayUs = 0;
+uint32_t delayBeforeOnUs = 0;
+uint32_t onPulseTimeUs = 0;
+uint32_t delayAfterOnUs = 0;
+uint32_t offPulseTimeUs = 0;
+uint32_t delayAfterOffUs = 0;
+uint32_t delayAfterDACStepUs = 0;
+uint32_t roPulseTimeUs = 0;
 float roRestingV = 0;
 float roStartV = 0;
 float roStepSizeV = 0;
-uint16_t roSteps = 0;
+uint32_t roSteps = 0;
 float cycleStartV = 0;
 float cycleStepSizeV = 0;
-uint16_t cycleSteps = 0;
+uint32_t cycleSteps = 0;
 
 //PIXEL CYCLE PARAMETERS, CURRENTLY FOR UP TO 3 PULSES
-uint16_t sequenceTimeUs = 0;
+uint32_t sequenceTimeUs = 0;
 uint8_t p1Line = 0;
-uint16_t p1StartUs = 0;
-uint16_t p1EndUs = 0;
+uint32_t p1StartUs = 0;
+uint32_t p1EndUs = 0;
 uint8_t p2Line = 0;
-uint16_t p2StartUs = 0;
-uint16_t p2EndUs = 0;
+uint32_t p2StartUs = 0;
+uint32_t p2EndUs = 0;
 uint8_t p3Line = 0;
-uint16_t p3StartUs = 0;
-uint16_t p3EndUs = 0;
+uint32_t p3StartUs = 0;
+uint32_t p3EndUs = 0;
 
 void readParameter(String & inputString) {
   String out = "Running read parameter function";
@@ -141,19 +144,19 @@ void setParameter(String pName, String pValue)
   }
   if (pName == "dimFourChan") {
     dimFourChan = pValue.toInt();
-    debugOut = "Parameter " + pName + " set to " + (String)dimThreeChan;
+    debugOut = "Parameter " + pName + " set to " + (String)dimFourChan;
   }
   if (pName == "dimFourStartV") {
     dimFourStartV = pValue.toFloat();
-    debugOut = "Parameter " + pName + " set to " + (String)dimThreeStartV;
+    debugOut = "Parameter " + pName + " set to " + (String)dimFourStartV;
   }
   if (pName == "dimFourLenV") {
     dimFourLenV = pValue.toFloat();
-    debugOut = "Parameter " + pName + " set to " + (String)dimThreeLenV;
+    debugOut = "Parameter " + pName + " set to " + (String)dimFourLenV;
   }
   if (pName == "dimFourStepSizeV") {
     dimFourStepSizeV = pValue.toFloat();
-    debugOut = "Parameter " + pName + " set to " + (String)dimThreeStepSizeV;
+    debugOut = "Parameter " + pName + " set to " + (String)dimFourStepSizeV;
   }
   if (pName == "angleRad") {
     angleRad = pValue.toFloat();
@@ -180,6 +183,18 @@ void setParameter(String pName, String pValue)
   if (pName == "cycleScanDACChan") {
     cycleScanDACChan = pValue.toInt();
     debugOut = "Parameter " + pName + " set to " + (String)cycleScanDACChan;
+  }
+  if (pName == "timeLapsePoints") {
+    timeLapsePoints = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)timeLapsePoints;
+  }
+  if (pName == "timeLapseDelayUs") {
+    timeLapseDelayUs = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)timeLapseDelayUs;
+  }
+  if (pName == "delayBeforeOnUs") {
+    delayBeforeOnUs = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)delayBeforeOnUs;
   }
   if (pName == "onPulseTimeUs") {
     onPulseTimeUs = pValue.toInt();

@@ -31,31 +31,34 @@ extern uint8_t roLaserTTLChan;
 extern uint8_t roScanDACChan;
 extern uint8_t cycleScanDACChan;
 
-extern uint16_t onPulseTimeUs;
-extern uint16_t delayAfterOnUs;
-extern uint16_t offPulseTimeUs;
-extern uint16_t delayAfterOffUs;
-extern uint16_t delayAfterDACStepUs;
-extern uint16_t roPulseTimeUs;
+extern uint16_t timeLapsePoints;
+extern uint32_t timeLapseDelayUs;
+extern uint32_t delayBeforeOnUs;
+extern uint32_t onPulseTimeUs;
+extern uint32_t delayAfterOnUs;
+extern uint32_t offPulseTimeUs;
+extern uint32_t delayAfterOffUs;
+extern uint32_t delayAfterDACStepUs;
+extern uint32_t roPulseTimeUs;
 extern float roRestingV;
 extern float roStartV;
 extern float roStepSizeV;
-extern uint16_t roSteps;
+extern uint32_t roSteps;
 extern float cycleStartV;
 extern float cycleStepSizeV;
-extern uint16_t cycleSteps;
+extern uint32_t cycleSteps;
 
 //PIXEL CYCLE PARAMETERS, CURRENTLY FOR UP TO 3 PULSES
-extern uint16_t sequenceTimeUs;
+extern uint32_t sequenceTimeUs;
 extern uint8_t p1Line;
-extern uint16_t p1StartUs;
-extern uint16_t p1EndUs;
+extern uint32_t p1StartUs;
+extern uint32_t p1EndUs;
 extern uint8_t p2Line;
-extern uint16_t p2StartUs;
-extern uint16_t p2EndUs;
+extern uint32_t p2StartUs;
+extern uint32_t p2EndUs;
 extern uint8_t p3Line;
-extern uint16_t p3StartUs;
-extern uint16_t p3EndUs;
+extern uint32_t p3StartUs;
+extern uint32_t p3EndUs;
 
 
 //FUNCTIONS

@@ -509,39 +509,53 @@ void loop()
 
       
       //Insert cycle loop HERE
-      for (int k = 0; k < cycleSteps; k++)
+      for(int tp = 0; tp < timeLapsePoints; tp++)
       {
-        setDACVoltage(cycleScanDACChan, cycleStartV + k*cycleStepSizeV); //Place stage in correct position
-        setDACVoltage(roScanDACChan, roRestingV); //Place galvo in resting position (where it should be when on/off pulses are pulsed)
-
-        //Turn on on-laser
-        setTTL(onLaserTTLChan, 1);
-        sincepLSRevent = 0;
-        //Turn off on-laser
-        waitUntil(sincepLSRevent, onPulseTimeUs);
-        setTTL(onLaserTTLChan, 0);
-        sincepLSRevent = 0;
-        //Turn on off-laser
-        waitUntil(sincepLSRevent, delayAfterOnUs);
-        setTTL(offLaserTTLChan, 1);
-        sincepLSRevent = 0;
-        //Turn off off-laser
-        waitUntil(sincepLSRevent, offPulseTimeUs);
-        setTTL(offLaserTTLChan, 0);
-        sincepLSRevent = 0;
-        //Start read-out scan
-        waitUntil(sincepLSRevent, delayAfterOffUs);
-        for (int i = 0; i < roSteps; i++)
+        for (int k = 0; k < cycleSteps; k++)
         {
-          setDACVoltage(roScanDACChan, roStartV + i * roStepSizeV);
+          setDACVoltage(cycleScanDACChan, cycleStartV + k*cycleStepSizeV); //Place stage in correct position
+          setDACVoltage(roScanDACChan, roRestingV); //Place galvo in resting position (where it should be when on/off pulses are pulsed)
+          //Wait to allow for read out of previous frame if not the first cycle
+          if (k != 0)
+          {
+            sincepLSRevent = 0;
+            waitUntil(sincepLSRevent, delayBeforeOnUs);
+          }
+          //Turn on on-laser
+          setTTL(onLaserTTLChan, 1);
           sincepLSRevent = 0;
-          //Turn on ro-laser
-          waitUntil(sincepLSRevent, delayAfterDACStepUs);
-          setTTL(roLaserTTLChan, 1);
+          //Turn off on-laser
+          waitUntil(sincepLSRevent, onPulseTimeUs);
+          setTTL(onLaserTTLChan, 0);
           sincepLSRevent = 0;
-          //Turn off ro-laser
-          waitUntil(sincepLSRevent, roPulseTimeUs);
-          setTTL(roLaserTTLChan, 0);
+          //Turn on off-laser
+          waitUntil(sincepLSRevent, delayAfterOnUs);
+          setTTL(offLaserTTLChan, 1);
+          sincepLSRevent = 0;
+          //Turn off off-laser
+          waitUntil(sincepLSRevent, offPulseTimeUs);
+          setTTL(offLaserTTLChan, 0);
+          sincepLSRevent = 0;
+          //Start read-out scan
+          waitUntil(sincepLSRevent, delayAfterOffUs);
+          for (int i = 0; i < roSteps; i++)
+          {
+            setDACVoltage(roScanDACChan, roStartV + i * roStepSizeV);
+            sincepLSRevent = 0;
+            //Turn on ro-laser
+            waitUntil(sincepLSRevent, delayAfterDACStepUs);
+            setTTL(roLaserTTLChan, 1);
+            sincepLSRevent = 0;
+            //Turn off ro-laser
+            waitUntil(sincepLSRevent, roPulseTimeUs);
+            setTTL(roLaserTTLChan, 0);
+          }
+        }
+        //Wait for the timelapse delay if not the last timepoint
+        if (tp < (timeLapsePoints - 1))
+        {
+          sincepLSRevent = 0;
+          waitUntil(sincepLSRevent, timeLapseDelayUs);
         }
       }
       //Reset voltages
@@ -565,10 +579,12 @@ void runPixelCycle() {
   setTTL(0, 1);
   setTTL(1, 1);
   setTTL(2, 1);
+  setTTL(3, 1);
   waitUntil(sincePixelCycleStart, p1EndUs);
   setTTL(0, 0);
   setTTL(1, 0);
   setTTL(2, 0);
+  setTTL(3, 0);
   //---
   /*
     setTTL(p1Line, 0);
@@ -584,7 +600,7 @@ void runPixelCycle() {
   waitUntil(sincePixelCycleStart, sequenceTimeUs);
 }
 
-void waitUntil(elapsedMicros counter, uint16_t timeout) {
+void waitUntil(elapsedMicros counter, uint32_t timeout) {
   while (counter < timeout) {
     ;
   }
