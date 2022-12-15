@@ -31,6 +31,8 @@
 #include "Linduino.h"
 #include "Adafruit_MCP23017.h"
 
+#include "parameters.h"
+
 #define focus 15     //sets focus line #
 #define pwrLed 11    //POWER indication
 #define dacLed 12    //POWER indication
@@ -73,43 +75,6 @@ uint16_t ttlActive = 0;
 int timeCycles = 1; //used for high speed switching inside of a loop
 int runCycles = 0; //holds running position vs total cycles for timelapse
 
-
-//PARAMETER INITIALIZATION
-
-//DAC RASTER SCAN
-uint8_t dimOneChan = 0;
-float dimOneStartV = 0; //In volts
-float dimOneLenV = 0;
-float dimOneStepSizeV = 0;
-uint8_t dimTwoChan = 0;
-float dimTwoStartV = 0;
-float dimTwoLenV = 0;
-float dimTwoStepSizeV = 0;
-uint8_t dimThreeChan = 0;
-float dimThreeStartV = 0;
-float dimThreeLenV = 0;
-float dimThreeStepSizeV = 0;
-uint8_t dimFourChan = 0;
-float dimFourStartV = 0;
-float dimFourLenV = 0;
-float dimFourStepSizeV = 0;
-uint16_t settlingTimeUs = 0;
-uint16_t dwellTimeUs = 0;
-float angleRad = 0;
-elapsedMicros usSinceReset;
-
-//PIXEL CYCLE PARAMETERS, CURRENTLY FOR UP TO 3 PULSES
-uint8_t p1Line = 0;
-uint16_t p1StartUs = 0;
-uint16_t p1EndUs = 0;
-uint8_t p2Line = 0;
-uint16_t p2StartUs = 0;
-uint16_t p2EndUs = 0;
-uint8_t p3Line = 0;
-uint16_t p3StartUs = 0;
-uint16_t p3EndUs = 0;
-elapsedMicros sincePixelCycleStart;
-
 //Memory arrays for DAC channels
 int currentDACValues[16]; //these store the DAC assigned numbers!
 byte RNG[16]; //these store the range choices for each channel
@@ -133,8 +98,12 @@ boolean reportTime = 0;
 boolean umArmIgnore = 0; //this handles micromanagers multiple ARM commands which are issued back-to-back on MDA acqtivation. Ignores after a short wait.
 boolean usepwm = false;
 byte pChannel = 0; //number of channels micromanager has attempted to control
-byte lastPT = 20;
 String idname = "ARC TRIGGERSCOPE 16 R4 BOARD 4v.612F - TestaLab version";
+
+
+//Timing variables
+elapsedMicros sincePixelCycleStart;
+elapsedMicros sincepLSRevent;
 
 void setup() {
   mcp.begin(0x27);   //turn on MUX comms
@@ -217,7 +186,9 @@ void loop()
 
   //************************   DEVICE CONTROL & COMMAND CODE          ***********************//
   //************************  SERIAL COMMUNICATION CODE    ******************///
-  //if (!Serial) {reboot();}
+  if (!Serial) {
+    reboot();
+  }
 
   if (stringComplete)  //Check whatever came in on serial
   {
@@ -228,7 +199,7 @@ void loop()
 
     //Message commands
     if (inputString.substring(0, 9) == "PARAMETER")   {
-      readParameter();
+      readParameter(inputString);
     }
     if (inputString == "STAT?\n")                     {
       debug();
@@ -267,59 +238,35 @@ void loop()
     }
 
 
-    //------------------------------------ SET DAC OUTPUT ------------------------------------------
+    //------------------------------------ SET DAC OUTPUT VOLTAGE ------------------------------------------
 
-    if (inputString.substring(0, 3) == "DAC" && inputString.substring(0, 5) != "DACPR" ) {
-      char dIn[2] = {inputString[3], inputString[4]}; //grab DAC Line #
-      byte dacNum = 0;
-      if (dIn[2] == 44) {
-        dacNum = atoi(&dIn[1]);  //IF less than 10, assign single digit value
+    if (inputString.substring(0, 3) == "DAC") {
+      uint8_t DACChannel;
+      float DACVoltage;
+      uint8_t index;
+      if (inputString[4] == 44) { //If fifth charachter is comma
+        DACChannel = (uint8_t)inputString.substring(3, 4).toInt();  //If less than 10, assign single digit value
+        index = 5; //Index of charactera after comma
       }
       else {
-        dacNum = atoi(dIn);  //IF greater than 10, assign both chars to integer
-      }
-      boolean inRange = true; //flag to check valid entry
-
-      byte sT = 0;
-      while (inputString[sT] != ',') {
-        ++sT;  //CHECKS WHERE THE START OF THE NUMERIC DAC VALUE BEGINS
-      }
-      ++sT;
-      char fstring[8] = {}; //create a string to hold char ascii for later conversion to integer value
-      byte bVal = sT;
-      while (sT <= inputString.length() )
-      {
-        fstring[sT - bVal] = inputString[sT];
-        ++sT;
-      }
-      int userdac = atol(fstring); //convert char table to useable integer for DAC level
-      if (dacNum < 0 || dacNum > 15) {
-        inRange = false; //if entry is outside valid DAC's then throw flag as false
+        DACChannel = (uint8_t)inputString.substring(3, 5).toInt();  //IF greater than 10, assign both chars to integer
+        index = 6; //Index of charactera after comma
       }
 
-      if (inRange) { //if inputs are valid{
-        Serial.print("!DAC"); //print recieve message to operator
-        Serial.print(dacNum); //print recieve message to operator
-        Serial.print("=");
-        Serial.println(userdac);
-        setDACValue(dacNum, userdac);
-        //led indication
-        byte dTotal = 0;
-        for (byte d = 0; d < 16; ++d) {
-          if (currentDACValues[d] > 0) {
-            ++dTotal;
-          }
-        }
-        if (dTotal > 0) {
-          mcp.digitalWrite(dacLed, 1); //turn on DAC LED
-        }
-        else  {
-          mcp.digitalWrite(dacLed, 0); //turn off LED
-        }
+      if (DACChannel < 0 || DACChannel > 15) {
+        Serial.println("DAC channel is not available");
       }
-      if (!inRange) //if inputs are bad
-      {
-        Serial.println("Outside DAC Channel Range, valid ranges are 1-16....");
+      else {
+        DACVoltage = inputString.substring(index, inputString.length() - 1).toFloat(); //Get float value after comma
+        if (VMin[DACChannel] < DACVoltage && DACVoltage < VMax[DACChannel]) {
+          setDACVoltage(DACChannel, DACVoltage);
+          Serial.print("DAC voltage set to: ");
+          Serial.print(DACVoltage);
+          Serial.println(" V");
+        }
+        else {
+          Serial.println("DAC Voltage is out of range");
+        }
       }
     }
 
@@ -372,7 +319,7 @@ void loop()
 
 
     //------------------------------------ RUN PROG_WAVE FUNCTION  ------------------------------------------
-
+    //This function is now probably obsolete
 
     //example string to this entry = "PROG_WAVE,1,1,10,0,100,10"
     if (inputString.substring(0, 9) == "PROG_WAVE")
@@ -494,6 +441,9 @@ void loop()
 
     if (inputString.substring(0, 11) == "RASTER_SCAN")
     {
+      String TSStatus = "Running raster scan";
+      Serial.println(TSStatus);
+
       float dimOnePosV = 0;
       float dimTwoPosV = 0;
       float dimThreePosV = 0;
@@ -501,6 +451,8 @@ void loop()
 
       float dimOnePrimeV;
       float dimTwoPrimeV;
+
+      mcp.digitalWrite(dacLed, 1); //turn on DAC LED
 
       while (abs(dimFourPosV) <= abs(dimFourLenV)) {
         setDACVoltage(dimFourChan, dimFourStartV + dimFourPosV);
@@ -542,6 +494,75 @@ void loop()
       setDACVoltage(dimTwoChan, dimTwoStartV);
       setDACVoltage(dimThreeChan, dimThreeStartV);
       setDACVoltage(dimFourChan, dimFourStartV);
+
+      mcp.digitalWrite(dacLed, 0); //turn off DAC LED
+      Serial.println("Scan done");
+    }
+
+    //------------------------------------ RUN pLS-RESOLFT_SCAN ------------------------------------------
+
+    if (inputString.substring(0, 16) == "pLS-RESOLFT_SCAN")
+    {
+      String TSStatus = "Running pLS-RESOLFT_SCAN scan";
+      Serial.println(TSStatus);
+      mcp.digitalWrite(dacLed, 1);
+
+      
+      //Insert cycle loop HERE
+      for(int tp = 0; tp < timeLapsePoints; tp++)
+      {
+        for (int k = 0; k < cycleSteps; k++)
+        {
+          setDACVoltage(cycleScanDACChan, cycleStartV + k*cycleStepSizeV); //Place stage in correct position
+          setDACVoltage(roScanDACChan, roRestingV); //Place galvo in resting position (where it should be when on/off pulses are pulsed)
+          //Wait to allow for read out of previous frame if not the first cycle
+          if (k != 0)
+          {
+            sincepLSRevent = 0;
+            waitUntil(sincepLSRevent, delayBeforeOnUs);
+          }
+          //Turn on on-laser
+          setTTL(onLaserTTLChan, 1);
+          sincepLSRevent = 0;
+          //Turn off on-laser
+          waitUntil(sincepLSRevent, onPulseTimeUs);
+          setTTL(onLaserTTLChan, 0);
+          sincepLSRevent = 0;
+          //Turn on off-laser
+          waitUntil(sincepLSRevent, delayAfterOnUs);
+          setTTL(offLaserTTLChan, 1);
+          sincepLSRevent = 0;
+          //Turn off off-laser
+          waitUntil(sincepLSRevent, offPulseTimeUs);
+          setTTL(offLaserTTLChan, 0);
+          sincepLSRevent = 0;
+          //Start read-out scan
+          waitUntil(sincepLSRevent, delayAfterOffUs);
+          for (int i = 0; i < roSteps; i++)
+          {
+            setDACVoltage(roScanDACChan, roStartV + i * roStepSizeV);
+            sincepLSRevent = 0;
+            //Turn on ro-laser
+            waitUntil(sincepLSRevent, delayAfterDACStepUs);
+            setTTL(roLaserTTLChan, 1);
+            sincepLSRevent = 0;
+            //Turn off ro-laser
+            waitUntil(sincepLSRevent, roPulseTimeUs);
+            setTTL(roLaserTTLChan, 0);
+          }
+        }
+        //Wait for the timelapse delay if not the last timepoint
+        if (tp < (timeLapsePoints - 1))
+        {
+          sincepLSRevent = 0;
+          waitUntil(sincepLSRevent, timeLapseDelayUs);
+        }
+      }
+      //Reset voltages
+      setDACVoltage(cycleScanDACChan, cycleStartV);
+      setDACVoltage(roScanDACChan, roRestingV);
+      mcp.digitalWrite(dacLed, 0); //turn off DAC LED
+      Serial.println("Scan done");
     }
     clearSerial();
     mcp.digitalWrite(readyLed, HIGH);
@@ -549,200 +570,37 @@ void loop()
 
 } //close main loop
 
-void readParameter() {
-  String out = "Running read parameter function\n";
-  Serial.print(out);
-  //Function to read paramter sent on form "PARAMETER,pName,pType,pValue\n"
-  byte charPos = 10;
-  String pName = "";
-  while (inputString[charPos] != ',' && inputString[charPos] != '\n' )
-  {
-    while (inputString[charPos] == ' ') {
-      charPos++;
-    }//Skip white spaces
-    pName += (char)inputString[charPos];
-    charPos++;
-  }
 
-  //Skip commma
-  charPos++;
-  String pValue = "";
-  while (inputString[charPos] != ',' && inputString[charPos] != '\n' )
-  {
-    while (inputString[charPos] == ' ') {
-      charPos++;
-    }//Skip white spaces
-    pValue += (char)inputString[charPos];
-    charPos++;
-  }
-  out = "Recieved pName: " + pName + ", pValue: " + pValue + "\n";
-  Serial.print(out);
-  setParameter(pName, pValue);//Send extracted strings to setParameter function
-}
-
-void setParameter(String pName, String pValue)
-{
-  String runStr = "Running setParameter function\n";
-  Serial.print(runStr);
-  if (pName == "dimOneChan") {
-    dimOneChan = pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)dimOneChan + "\n";
-    Serial.print(out);
-  }
-  if (pName == "dimOneStartV") {
-    dimOneStartV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimOneStartV + "\n";
-    Serial.print(out);
-  }
-  if (pName == "dimOneLenV") {
-    dimOneLenV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimOneLenV + "\n";
-    Serial.print(out);
-  }
-  if (pName == "dimOneStepSizeV") {
-    dimOneStepSizeV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimOneStepSizeV + "\n";
-    Serial.print(out);
-  }
-  if (pName == "dimTwoChan") {
-    dimTwoChan = pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)dimTwoChan + "\n";
-    Serial.print(out);
-  }
-  if (pName == "dimTwoStartV") {
-    dimTwoStartV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimTwoStartV + "\n";
-    Serial.print(out);
-  }
-  if (pName == "dimTwoLenV") {
-    dimTwoLenV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimTwoLenV + "\n";
-    Serial.print(out);
-  }
-  if (pName == "dimTwoStepSizeV") {
-    dimTwoStepSizeV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimTwoStepSizeV + "\n";
-    Serial.print(out);
-  }
-  if (pName == "dimThreeChan") {
-    dimThreeChan = pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)dimThreeChan + "\n";
-    Serial.print(out);
-  }
-  if (pName == "dimThreeStartV") {
-    dimThreeStartV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimThreeStartV + "\n";
-    Serial.print(out);
-  }
-  if (pName == "dimThreeLenV") {
-    dimThreeLenV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimThreeLenV + "\n";
-    Serial.print(out);
-  }
-  if (pName == "dimThreeStepSizeV") {
-    dimThreeStepSizeV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimThreeStepSizeV + "\n";
-    Serial.print(out);
-  }
-  if (pName == "dimFourChan") {
-    dimFourChan = pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)dimThreeChan + "\n";
-    Serial.print(out);
-  }
-  if (pName == "dimFourStartV") {
-    dimFourStartV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimThreeStartV + "\n";
-    Serial.print(out);
-  }
-  if (pName == "dimFourLenV") {
-    dimFourLenV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimThreeLenV + "\n";
-    Serial.print(out);
-  }
-  if (pName == "dimFourStepSizeV") {
-    dimFourStepSizeV = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)dimThreeStepSizeV + "\n";
-    Serial.print(out);
-  }
-  if (pName == "settlingTimeUs") {
-    settlingTimeUs = pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)settlingTimeUs + "\n";
-    Serial.print(out);
-  }
-  if (pName == "dwellTimeUs") {
-    dwellTimeUs = pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)dwellTimeUs + "\n";
-    Serial.print(out);
-  }
-  if (pName == "angleRad") {
-    angleRad = pValue.toFloat();
-    String out = "Parameter " + pName + " set to " + (String)angleRad + "\n";
-    Serial.print(out);
-  }
-  if (pName == "p1Line") {
-    p1Line = pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)p1Line + "\n";
-    Serial.print(out);
-  }
-  if (pName == "p1StartUs") {
-    p1StartUs = (uint16_t)pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)p1StartUs + "\n";
-    Serial.print(out);
-  }
-  if (pName == "p1EndUs") {
-    p1EndUs = (uint16_t)pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)p1EndUs + "\n";
-    Serial.print(out);
-  }
-  if (pName == "p2Line") {
-    p2Line = (uint8_t)pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)p2Line + "\n";
-    Serial.print(out);
-  }
-  if (pName == "p2StartUs") {
-    p2StartUs = (uint16_t)pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)p2StartUs + "\n";
-    Serial.print(out);
-  }
-  if (pName == "p2EndUs") {
-    p2EndUs = (uint16_t)pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)p2EndUs + "\n";
-    Serial.print(out);
-  }
-  if (pName == "p3Line") {
-    p3Line = (uint8_t)pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)p3Line + "\n";
-    Serial.print(out);
-  }
-  if (pName == "p3StartUs") {
-    p3StartUs = (uint16_t)pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)p3StartUs + "\n";
-    Serial.print(out);
-  }
-  if (pName == "p3EndUs") {
-    p3EndUs = (uint16_t)pValue.toInt();
-    String out = "Parameter " + pName + " set to " + (String)p3EndUs + "\n";
-    Serial.print(out);
-  }
-}
 
 void runPixelCycle() {
   sincePixelCycleStart = 0;
   waitUntil(sincePixelCycleStart, p1StartUs);
-  setTTL(p1Line, 1);
+  //Temporary fix
+  setTTL(0, 1);
+  setTTL(1, 1);
+  setTTL(2, 1);
+  setTTL(3, 1);
   waitUntil(sincePixelCycleStart, p1EndUs);
-  setTTL(p1Line, 0);
-  waitUntil(sincePixelCycleStart, p2StartUs);
-  setTTL(p2Line, 1);
-  waitUntil(sincePixelCycleStart, p2EndUs);
-  setTTL(p2Line, 0);
-  waitUntil(sincePixelCycleStart, p3StartUs);
-  setTTL(p3Line, 1);
-  waitUntil(sincePixelCycleStart, p3EndUs);
-  setTTL(p3Line, 0);
+  setTTL(0, 0);
+  setTTL(1, 0);
+  setTTL(2, 0);
+  setTTL(3, 0);
+  //---
+  /*
+    setTTL(p1Line, 0);
+    waitUntil(sincePixelCycleStart, p2StartUs);
+    setTTL(p2Line, 1);
+    waitUntil(sincePixelCycleStart, p2EndUs);
+    setTTL(p2Line, 0);
+    waitUntil(sincePixelCycleStart, p3StartUs);
+    setTTL(p3Line, 1);
+    waitUntil(sincePixelCycleStart, p3EndUs);
+    setTTL(p3Line, 0);
+  */
+  waitUntil(sincePixelCycleStart, sequenceTimeUs);
 }
 
-void waitUntil(elapsedMicros counter, uint16_t timeout) {
+void waitUntil(elapsedMicros counter, uint32_t timeout) {
   while (counter < timeout) {
     ;
   }
@@ -849,15 +707,14 @@ void clearSerial() {
 }
 
 /*Set DAC Value*/
-void setDACValue(byte dNum, int value) {
-  dac_write(10, 0, dNum, value); // Send dac_code
-  currentDACValues[dNum] = value; //Save value set
+void setDACValue(byte DACChan, int int16Value) {
+  dac_write(10, 0, DACChan, int16Value); // Send dac_code
+  currentDACValues[DACChan] = int16Value; //Save value set
 }
 
 void setDACVoltage(byte DACChan, float voltage) {
   int int16Value = (int)(65535.0 * (voltage - VMin[DACChan]) / (VMax[DACChan] - VMin[DACChan]));
-  dac_write(10, 0, DACChan, int16Value); // Send dac_code
-  currentDACValues[DACChan] = int16Value; //Save value set
+  setDACValue(DACChan, int16Value);
 }
 
 /*SET TTL CONTROL*/
