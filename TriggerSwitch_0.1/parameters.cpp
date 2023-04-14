@@ -39,6 +39,7 @@ uint32_t offPulseTimeUs = 0;
 uint32_t delayAfterOffUs = 0;
 uint32_t delayAfterDACStepUs = 0;
 uint32_t roPulseTimeUs = 0;
+uint32_t delayAfterRoUs = 0;
 float roRestingV = 0;
 float roStartV = 0;
 float roStepSizeV = 0;
@@ -219,6 +220,10 @@ void setParameter(String pName, String pValue)
   if (pName == "roPulseTimeUs") {
     roPulseTimeUs = pValue.toInt();
     debugOut = "Parameter " + pName + " set to " + (String)roPulseTimeUs;
+  }
+  if (pName == "delayAfterRoUs") {
+    delayAfterRoUs = pValue.toInt();
+    debugOut = "Parameter " + pName + " set to " + (String)delayAfterRoUs;
   }
   if (pName == "roRestingV") {
     roRestingV = pValue.toFloat();

@@ -40,6 +40,7 @@ extern uint32_t offPulseTimeUs;
 extern uint32_t delayAfterOffUs;
 extern uint32_t delayAfterDACStepUs;
 extern uint32_t roPulseTimeUs;
+extern uint32_t delayAfterRoUs;
 extern float roRestingV;
 extern float roStartV;
 extern float roStepSizeV;
